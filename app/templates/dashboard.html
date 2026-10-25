@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="60">
+  <title>Weather Alert Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+    .header h1 { margin: 0; font-size: 1.75rem; }
+    .btn { background: #2563eb; color: #fff; border: none; padding: 0.55rem 1.1rem; font-size: 0.9rem; font-weight: 500; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: background 0.15s ease, transform 0.05s; }
+    .btn:hover { background: #1d4ed8; }
+    .btn:active { transform: scale(0.98); }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .temp { font-size: 2.5rem; font-weight: 600; }
+    .cold { color: #1d4ed8; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #eee; }
+    .muted { color: #666; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Weather Alerts · {{ city }}</h1>
+    <form method="post" action="{{ url_for('main.check_now') }}">
+      <button type="submit" class="btn">⚡ Check Weather Now</button>
+    </form>
+  </div>
+  <div class="card">
+    {% if latest %}
+      <div class="temp {% if latest.temperature_c < threshold %}cold{% endif %}">{{ "%.1f"|format(latest.temperature_c) }}°C</div>
+      <div>{{ latest.description|capitalize }} in {{ latest.city }}</div>
+      <div class="muted">Alert threshold: below {{ threshold }}°C · Updated {{ latest.recorded_at_ist.strftime("%Y-%m-%d %I:%M %p") }} IST</div>
+    {% else %}
+      <div>No readings yet. The first check runs shortly after startup.</div>
+    {% endif %}
+  </div>
+  {% if readings %}
+  <table>
+    <tr><th>Time (IST)</th><th>Temp</th><th>Conditions</th><th>Alert</th></tr>
+    {% for r in readings %}
+    <tr>
+      <td>{{ r.recorded_at_ist.strftime("%d %b %I:%M %p") }}</td>
+      <td>{{ "%.1f"|format(r.temperature_c) }}°C</td>
+      <td>{{ r.description }}</td>
+      <td>{{ "Sent" if r.alert_sent else "" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</body>
+</html>
