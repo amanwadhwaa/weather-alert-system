@@ -1,53 +1,536 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="60">
-  <title>Weather Alert Dashboard</title>
+  <title>Weather watch · {{ city }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
-    .header h1 { margin: 0; font-size: 1.75rem; }
-    .btn { background: #2563eb; color: #fff; border: none; padding: 0.55rem 1.1rem; font-size: 0.9rem; font-weight: 500; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: background 0.15s ease, transform 0.05s; }
-    .btn:hover { background: #1d4ed8; }
-    .btn:active { transform: scale(0.98); }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
-    .temp { font-size: 2.5rem; font-weight: 600; }
-    .cold { color: #1d4ed8; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #eee; }
-    .muted { color: #666; font-size: .9rem; }
+    :root {
+      color-scheme: dark;
+      --ink: #07131f;
+      --ink-soft: #0d2030;
+      --line: rgba(196, 224, 239, .15);
+      --text: #eef7fb;
+      --muted: #91aab8;
+      --sky: #8bd7f4;
+      --sky-strong: #4eb9e4;
+      --sun: #ffc76b;
+      --alert: #ff937c;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--ink);
+      color: var(--text);
+      font-family: "DM Sans", sans-serif;
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .22;
+      background-image: linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+      background-size: 4rem 4rem;
+      -webkit-mask-image: linear-gradient(to bottom, black, transparent 75%);
+      mask-image: linear-gradient(to bottom, black, transparent 75%);
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 3rem));
+      margin: 0 auto;
+      padding: 2.5rem 0 4rem;
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 4.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      color: var(--text);
+      text-decoration: none;
+      font-family: "Sora", sans-serif;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border: 1px solid rgba(139, 215, 244, .55);
+      border-radius: 50%;
+      color: var(--sky);
+    }
+
+    .brand-mark svg {
+      width: 1.2rem;
+      height: 1.2rem;
+    }
+
+    .live {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .live::before {
+      content: "";
+      width: .45rem;
+      height: .45rem;
+      border-radius: 50%;
+      background: #6ee7a3;
+      box-shadow: 0 0 0 .25rem rgba(110, 231, 163, .12);
+      animation: live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes live-pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(.85);
+      }
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+      align-items: end;
+      gap: 4rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      max-width: 10ch;
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: clamp(3.5rem, 8vw, 7.8rem);
+      line-height: .95;
+      letter-spacing: -.04em;
+      font-weight: 600;
+    }
+
+    .summary {
+      max-width: 27rem;
+      margin: 0 0 .55rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .summary strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .check-form {
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .65rem;
+      min-height: 2.75rem;
+      padding: .65rem 1rem;
+      border: 1px solid rgba(139, 215, 244, .5);
+      border-radius: 999px;
+      background: rgba(139, 215, 244, .08);
+      color: var(--sky);
+      font: 600 .85rem "DM Sans", sans-serif;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--sky);
+      background: rgba(139, 215, 244, .16);
+      transform: translateY(-1px);
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--sun);
+      outline-offset: 3px;
+    }
+
+    .btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .reading {
+      position: relative;
+      min-height: 14rem;
+      padding: 1.6rem 1.8rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(19, 48, 68, .8), rgba(8, 22, 34, .72));
+      overflow: hidden;
+    }
+
+    .reading::after {
+      content: "";
+      position: absolute;
+      width: 14rem;
+      height: 14rem;
+      right: -4rem;
+      bottom: -7rem;
+      border-radius: 50%;
+      background: rgba(78, 185, 228, .16);
+      filter: blur(2px);
+    }
+
+    .reading-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .reading-label {
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .reading-time {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .temp {
+      position: relative;
+      z-index: 1;
+      margin: .5rem 0 .3rem;
+      color: var(--sky);
+      font-family: "Sora", sans-serif;
+      font-size: clamp(4.5rem, 10vw, 7.5rem);
+      line-height: .95;
+      letter-spacing: -.04em;
+      transition: color .2s ease;
+    }
+
+    .temp.cold {
+      color: var(--alert);
+    }
+
+    .condition {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      color: var(--text);
+    }
+
+    .condition svg {
+      width: 1.45rem;
+      color: var(--sun);
+    }
+
+    .threshold {
+      position: relative;
+      z-index: 1;
+      margin-top: 1.8rem;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .threshold strong {
+      color: var(--alert);
+      font-weight: 600;
+    }
+
+    .alert-tag {
+      display: inline-flex;
+      align-items: center;
+      margin-left: .5rem;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      background: rgba(255, 147, 124, .15);
+      color: var(--alert);
+      font-size: .72rem;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .history {
+      padding-top: 2.8rem;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: "Sora", sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: -.025em;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th,
+    td {
+      padding: 1rem .35rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 500;
+      letter-spacing: .03em;
+    }
+
+    td {
+      color: #cbe0e8;
+      font-size: .9rem;
+    }
+
+    td:first-child {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    td:nth-child(2) {
+      color: var(--text);
+      font-family: "Sora", sans-serif;
+      font-weight: 600;
+    }
+
+    .alert-status {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: var(--alert);
+      font-size: .8rem;
+    }
+
+    .alert-status::before {
+      content: "";
+      width: .4rem;
+      height: .4rem;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .empty {
+      padding: 1.5rem 0;
+      color: var(--muted);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 700px) {
+      .shell {
+        width: min(100% - 2rem, 1120px);
+        padding-top: 1.25rem;
+      }
+
+      .topbar {
+        margin-bottom: 3.25rem;
+      }
+
+      .intro {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding-bottom: 2rem;
+      }
+
+      h1 {
+        font-size: clamp(3.5rem, 18vw, 6rem);
+      }
+
+      .reading {
+        min-height: 13rem;
+      }
+
+      .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .2rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="header">
-    <h1>Weather Alerts · {{ city }}</h1>
-    <form method="post" action="{{ url_for('main.check_now') }}">
-      <button type="submit" class="btn">⚡ Check Weather Now</button>
-    </form>
-  </div>
-  <div class="card">
-    {% if latest %}
-      <div class="temp {% if latest.temperature_c < threshold %}cold{% endif %}">{{ "%.1f"|format(latest.temperature_c) }}°C</div>
-      <div>{{ latest.description|capitalize }} in {{ latest.city }}</div>
-      <div class="muted">Alert threshold: below {{ threshold }}°C · Updated {{ latest.recorded_at_ist.strftime("%Y-%m-%d %I:%M %p") }} IST</div>
-    {% else %}
-      <div>No readings yet. The first check runs shortly after startup.</div>
-    {% endif %}
-  </div>
-  {% if readings %}
-  <table>
-    <tr><th>Time (IST)</th><th>Temp</th><th>Conditions</th><th>Alert</th></tr>
-    {% for r in readings %}
-    <tr>
-      <td>{{ r.recorded_at_ist.strftime("%d %b %I:%M %p") }}</td>
-      <td>{{ "%.1f"|format(r.temperature_c) }}°C</td>
-      <td>{{ r.description }}</td>
-      <td>{{ "Sent" if r.alert_sent else "" }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% endif %}
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('main.dashboard') }}" aria-label="Weather watch home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M7.5 17.5h8.2a3.3 3.3 0 0 0 .4-6.58A5.4 5.4 0 0 0 5.8 9.5a4 4 0 0 0 1.7 8Z" />
+          </svg>
+        </span>
+        Weather watch
+      </a>
+      <span class="live">Auto-updating every 5 minutes</span>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title">{{ city }}<span aria-hidden="true">.</span></h1>
+        <p class="summary">
+          Current conditions and recent readings for <strong>{{ city }}</strong>.
+          Your alert is active when temperatures fall below the threshold.
+        </p>
+        <form class="check-form" method="post" action="{{ url_for('main.check_now') }}">
+          <button type="submit" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M13 2 4.5 13h6l-.5 9L19.5 11h-6L13 2Z" />
+            </svg>
+            Check Weather Now
+          </button>
+        </form>
+      </div>
+
+      <article class="reading" aria-label="Latest weather reading">
+        {% if latest %}
+        <div class="reading-top">
+          <span class="reading-label">Latest reading</span>
+          <span class="reading-time">Updated {{ latest.recorded_at_ist.strftime("%I:%M %p IST") }}</span>
+        </div>
+        <div class="temp {% if latest.temperature_c < threshold %}cold{% endif %}">{{
+          "%.1f"|format(latest.temperature_c) }}<span aria-hidden="true">°</span><span class="sr-only"> degrees
+            Celsius</span></div>
+        <div class="condition">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.5" />
+            <path
+              d="M12 2v2.2M12 19.8V22M4.9 4.9l1.55 1.55M17.55 17.55l1.55 1.55M2 12h2.2M19.8 12H22M4.9 19.1l1.55-1.55M17.55 6.45l1.55-1.55" />
+          </svg>
+          {{ latest.description|capitalize }}
+        </div>
+        <div class="threshold">
+          Alert threshold <strong>below {{ threshold }}°C</strong>
+          {% if latest.temperature_c < threshold %} <span class="alert-tag">Alert active</span>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="reading-top">
+          <span class="reading-label">Latest reading</span>
+        </div>
+        <p class="empty">Waiting for first reading. The first check runs shortly after startup.</p>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="history" aria-labelledby="history-title">
+      <div class="section-heading">
+        <h2 id="history-title">Recent readings</h2>
+        <span class="section-note">Times shown in IST</span>
+      </div>
+      {% if readings %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Temperature</th>
+              <th scope="col">Conditions</th>
+              <th scope="col">Alert</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in readings %}
+            <tr>
+              <td>{{ r.recorded_at_ist.strftime("%d %b %I:%M %p") }}</td>
+              <td>{{ "%.1f"|format(r.temperature_c) }}°C</td>
+              <td>{{ r.description|capitalize }}</td>
+              <td>{% if r.alert_sent %}<span class="alert-status">Sent</span>{% else %}<span class="muted">—</span>{%
+                endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="empty">No readings yet.</p>
+      {% endif %}
+    </section>
+  </main>
 </body>
+
 </html>
