@@ -67,5 +67,9 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           IMAGE: ${{ needs.build-and-push.outputs.image }}
         run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_URL secret is not configured in GitHub repository secrets. Skipping deploy."
+            exit 0
+          fi
           ENCODED=$(jq -rn --arg u "$IMAGE" '$u|@uri')
           curl -fsS -X POST "${RENDER_DEPLOY_HOOK_URL}&imgURL=${ENCODED}"
