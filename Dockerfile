@@ -12,7 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY wsgi.py .
 
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser \
+    && mkdir -p /srv/instance \
+    && chown -R appuser:appuser /srv
+
 USER appuser
 
 EXPOSE 8000
